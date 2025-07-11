@@ -1,7 +1,4 @@
-/*
-*
- */
-package main
+package router
 
 import (
 	"context"
@@ -24,9 +21,7 @@ import (
 
 // *********************** variable ********************************************
 
-// NetworkHost for holding the host
-var NetworkHost = "http://localhost:8545" // Ganache host
-
+var NetworkHost string
 var client *ethclient.Client // for client to access globally
 
 // *********************** structs *********************************************
@@ -83,6 +78,7 @@ type txDetails struct {
 	TxFromAddress string
 	TxData        string
 	TxValue       *big.Int
+	TxStatus      string
 }
 
 // for transaction details
@@ -339,6 +335,14 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 				toAddress = tx.To().Hex()
 			}
 
+			// check for receipt status
+			var receiptStatus string
+			if receipt != nil && receipt.Status == uint64(1) {
+				receiptStatus = "SUCCESSFUL"
+			} else {
+				receiptStatus = "FAILED"
+			}
+
 			signer := types.LatestSignerForChainID(tx.ChainId())
 			sender, _ := signer.Sender(tx)
 			fmt.Println("From inside: ", sender.Hex())
@@ -351,6 +355,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 				TxFromAddress: sender.Hex(),
 				TxData:        hex.EncodeToString(tx.Data()),
 				TxValue:       tx.Value(),
+				TxStatus:      receiptStatus,
 			}
 			// since transaction are multiple, loading it into an array
 			listTxDetails = append(listTxDetails, dt)
@@ -434,7 +439,6 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, log)
 
 	} else {
-
 		// getting transaction details
 
 		// check for toAddress
@@ -456,6 +460,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 			TxFromAddress: sender.Hex(),
 			TxData:        hex.EncodeToString(tx.Data()),
 			TxValue:       tx.Value(),
+			TxStatus:      receiptStatus,
 		}
 		// since transaction are multiple, loading it into an array
 		listTxDetails = append(listTxDetails, dt)
@@ -482,10 +487,10 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 /*
 kickBack function: kickback to 404 if any invalid request or failure happens
 */
-func kickBackErr(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("template/404.html"))
-	tmpl.Execute(w, nil)
-}
+// func kickBackErr(w http.ResponseWriter, r *http.Request) {
+// 	tmpl := template.Must(template.ParseFiles("template/404.html"))
+// 	tmpl.Execute(w, nil)
+// }
 func kickBack(err error, msg string) {
 	if err != nil {
 		fmt.Println("/******** ERROR ********************************************/")
@@ -505,79 +510,59 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	var _blockdetails []blockInfo     // to hold the blockNumber
 	var _accountDetails []accountInfo // to hold the blockNumber
 
-	var clientErr error
+	// Here it fetches the latest block for the connected client (i.e., ganache)
+	numBlock, headerByNumberErr := client.HeaderByNumber(context.Background(), nil)
+	kickBack(headerByNumberErr, "Reason:`@HeaderByNumber` failed. Make sure GANACHE runs @ localhost")
+	// Here it fetches the NetworkID for the connected client (i.e., ganache)
+	networkID, networkIDErr := client.NetworkID(context.Background())
+	kickBack(networkIDErr, "Reason: `@NetworkID` failed. Make sure GANACHE runs @ localhost")
+	// Here it fetches the pending transaction for the connected client (i.e., ganache)
+	pendingTxCount, _ := client.PendingTransactionCount(context.Background())
+	// Here it fetches the suggested gas price for the connected client (i.e., ganache)
+	suggestedGasPrice, suggestGasPriceError := client.SuggestGasPrice(context.Background())
+	kickBack(suggestGasPriceError, "Reason: `@SuggestGasPrice` failed. Couldn't able to fetch Suggested Gas Price")
 
-	// parsing the request
-	for _, qs := range r.URL.Query() {
-		NetworkHost = qs[0]
+	// Here it fetches only the lasted 5 block for the home page
+	for x := numBlock.Number.Int64(); x > (numBlock.Number.Int64() - 5); x-- {
+		if x < 1 {
+			// Todo : break here to overcome negativity
+			break
+		} else {
+			// load all the block details
+			_blockdetails = append(_blockdetails, blockPage(w, big.NewInt(x)))
+		}
 	}
 
-	// updating the client
-	client, clientErr = ethclient.Dial(NetworkHost)
+	clientGanache := newClient(NetworkHost)
+	var accounts []string
 
-	if clientErr != nil {
-		log := txLogs{
-			Status:   404,
-			Log:      "Host provided is invalid. Client Error",
-			ErrorMsg: clientErr,
-		}
-		tmpl := template.Must(template.ParseFiles("template/404.html"))
-		tmpl.Execute(w, log)
-	} else {
-		// Here it fetches the latest block for the connected client (i.e., ganache)
-		numBlock, headerByNumberErr := client.HeaderByNumber(context.Background(), nil)
-		kickBack(headerByNumberErr, "Reason:`@HeaderByNumber` failed. Make sure GANACHE runs @ localhost")
-		// Here it fetches the NetworkID for the connected client (i.e., ganache)
-		networkID, networkIDErr := client.NetworkID(context.Background())
-		kickBack(networkIDErr, "Reason: `@NetworkID` failed. Make sure GANACHE runs @ localhost")
-		// Here it fetches the pending transaction for the connected client (i.e., ganache)
-		pendingTxCount, _ := client.PendingTransactionCount(context.Background())
-		// Here it fetches the suggested gas price for the connected client (i.e., ganache)
-		suggestedGasPrice, suggestGasPriceError := client.SuggestGasPrice(context.Background())
-		kickBack(suggestGasPriceError, "Reason: `@SuggestGasPrice` failed. Couldn't able to fetch Suggested Gas Price")
+	err := clientGanache.call("eth_accounts", &accounts)
 
-		// Here it fetches only the lasted 5 block for the home page
-		for x := numBlock.Number.Int64(); x > (numBlock.Number.Int64() - 5); x-- {
-			if x < 1 {
-				// Todo : break here to overcome negativity
-				break
-			} else {
-				// load all the block details
-				_blockdetails = append(_blockdetails, blockPage(w, big.NewInt(x)))
-			}
-		}
-
-		clientGanache := newClient(NetworkHost)
-		var accounts []string
-
-		err := clientGanache.call("eth_accounts", &accounts)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-		//fmt.Println(accounts)
-		// getting account details
-		itr := 0
-		for _, acc := range accounts {
-			// check for toAddress
-			account := common.HexToAddress(acc)
-			_accountDetails = append(_accountDetails, getAccountDetails(account, itr))
-			itr += 1
-		}
-		// data: values to be rendered
-		data := sysInfo{
-			NumBlock:                numBlock.Number.String(),
-			NetworkID:               networkID,
-			PendingTransactionCount: pendingTxCount,
-			SuggestedGasPrice:       suggestedGasPrice,
-			BlockDetails:            _blockdetails,
-			AccountDetails:          _accountDetails,
-		}
-
-		// mux render
-		tmpl := template.Must(template.ParseFiles("template/index.html"))
-		tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
 	}
+	//fmt.Println(accounts)
+	// getting account details
+	itr := 0
+	for _, acc := range accounts {
+		// check for toAddress
+		account := common.HexToAddress(acc)
+		_accountDetails = append(_accountDetails, getAccountDetails(account, itr))
+		itr += 1
+	}
+	// data: values to be rendered
+	data := sysInfo{
+		NumBlock:                numBlock.Number.String(),
+		NetworkID:               networkID,
+		PendingTransactionCount: pendingTxCount,
+		SuggestedGasPrice:       suggestedGasPrice,
+		BlockDetails:            _blockdetails,
+		AccountDetails:          _accountDetails,
+	}
+
+	// mux render
+	tmpl := template.Must(template.ParseFiles("template/index.html"))
+	tmpl.Execute(w, data)
 }
 
 // *********************** welcome page ****************************************
@@ -586,30 +571,17 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 welcomePage function: serves the welcome page.
 */
 func welcomePage(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("template/welcome.html"))
-	tmpl.Execute(w, nil)
+	// tmpl := template.Must(template.ParseFiles("template/welcome.html"))
+	// tmpl.Execute(w, nil)
+	// redirecting to home page
+	http.Redirect(w, r, "/homepage", http.StatusSeeOther)
 }
 
-// *********************** main ************************************************
-/*
-	main: Main Handler, handles all the incoming request and maps for a route.
-
-*/
-func main() {
-
-	fmt.Println("!!!!INITIALIZING SERVER!!!!")
-	config := conf.LoadConfig("conf/app.yaml")
-	// updating the host from config file
-	NetworkHost = config.NetworkHost
-	// mux router
-	gorilla := mux.NewRouter()
-
-	// network client activation
-	client, _ = ethclient.Dial(NetworkHost)
-
+func InitRouter(config conf.Config) *mux.Router {
 	// for the static file handling, all the assets files will be loaded into the static folder
 	staticFileHandler := http.FileServer(http.Dir("static"))
-
+	// mux router
+	gorilla := mux.NewRouter()
 	// routes the all the static accessing url to the static folder
 	gorilla.PathPrefix("/static/").Handler(http.StripPrefix("/static/", staticFileHandler))
 
@@ -621,15 +593,19 @@ func main() {
 	gorilla.HandleFunc("/accInfo", showBalanceInfo)
 	gorilla.HandleFunc("/", welcomePage)
 
-	// http server
-	// Note: Here gorilla is like passing our own server handler into net/http, by default its false
-	srv := &http.Server{
-		Handler: gorilla,
-		Addr:    config.ServerAddr,
-		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+	// setting the network host globally
+	NetworkHost = config.NetworkHost
+	// initializing the client with the network host
+	var clientErr error
+	client, clientErr = ethclient.Dial(NetworkHost)
+	if clientErr != nil {
+		log.Fatal("Failed to connect to the Ethereum client: ", clientErr)
 	}
-	fmt.Println("!!!! SERVER STARTED at ADDRESS : 127.0.0.1:5051 !!!!")
-	log.Fatal(srv.ListenAndServe())
+	// test connection
+	_, err := client.BlockNumber(context.Background())
+	if err != nil {
+		log.Fatal("Failed to connect to the Ethereum client: ", err)
+	}
+
+	return gorilla
 }

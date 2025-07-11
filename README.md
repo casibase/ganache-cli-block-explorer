@@ -30,19 +30,29 @@ And of course Dillinger itself is open source with a [public repository][dill]
 
 `git pull the repository`
 
-```go
-go run router.go rpcRequestGo.go
+The default configuration file is `conf/app.yaml`. You can run the project directly, or modify the configuration as needed:
+
+```yaml
+network_host: "http://localhost:8545"  # Ethereum JSON-RPC host
+server_addr: "127.0.0.1:5051"           # Web server address
 ```
-`Verify the deployment by navigating to your server address in your preferred browser.`
+
+If you do not modify the file, the program will use the above default settings.
+
+```go
+go run main.go
+```
+
+Open your browser and visit your server address to verify deployment:
 
 ```sh
 127.0.0.1:5051
 ```
-Note : This web application hosts in port `5051`, please make sure the port `5051` is not occupied.
 
-```sh
-Enter the ganache host and port in the welcome page Eg: http://127.0.0.1:8545, Good to Go.. Enjoy !
-```
+> Note: The application listens on port 5051 by default. Please make sure this port is not occupied.
+
+To change the network or port, simply edit `conf/app.yaml` and restart the service for changes to take effect.
+
 ### Development
 
 Want to contribute? Great!
