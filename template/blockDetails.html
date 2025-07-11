@@ -55,7 +55,8 @@
 
       <!-- Nav Item - Pages Collapse Menu -->
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+          aria-controls="collapseTwo">
           <i class="fas fa-fw fa-cog"></i>
           <span>Menu</span>
         </a>
@@ -93,7 +94,8 @@
 
             <!-- Nav Item - User Information -->
             <li class="nav-item dropdown no-arrow">
-              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">Ganache Block-Explorer</span>
                 <img class="img-profile rounded-circle" src="/static/img/ganache_ico.png">
               </a>
@@ -122,7 +124,9 @@
                   <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                       <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">BlockNumber</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ .Block }}</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        <a href="/txpage?blocknumber={{ .Block }}">{{ .Block }}</a>
+                      </div>
                     </div>
                     <div class="col-auto">
                       <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -146,97 +150,98 @@
                 </div>
                 <!-- Card Body -->
                 <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                  <thead>
-                    <tr>
-                      <th>Overview</th>
-                      <th>Comments</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                        <td>BlockHash</td>
-                        <td>{{ .BlockHash }}</td>
-                    </tr>
-                    <tr>
-                        <td>BlockNonce</td>
-                        <td>{{ .BlockNonce }}</td>
-                    </tr>
-                    <tr>
-                        <td>Transactions</td>
-                        <td>{{ .Transactions }}</td>
-                    </tr>
-                    <tr>
-                        <td>GasUsed</td>
-                        <td>{{ .GasUsed }}</td>
-                    </tr>
-                    <tr>
-                        <td>MinedOn</td>
-                        <td>{{ .MinedOn }}</td>
-                    </tr>
-                    <tr>
-                        <td>Difficulty</td>
-                        <td>{{ .Difficulty }}</td>
-                    </tr>
-                    <tr>
-                        <td>Size</td>
-                        <td>{{ .Size }}</td>
-                    </tr>
-                    <tr>
-                        <td>Gaslimit</td>
-                        <td>{{ .Gaslimit }}</td>
-                    </tr>
-                    <tr>
-                        <td>ParentHash</td>
-                        <td>{{ .ParentHash }}</td>
-                    </tr>
-                    <tr>
-                        <td>UncleHash</td>
-                        <td>{{ .UncleHash }}</td>
-                    </tr>
-                   </tbody>
-                </table>
+                  <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                      <thead>
+                        <tr>
+                          <th>Overview</th>
+                          <th>Comments</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>BlockHash</td>
+                          <td>{{ .BlockHash }}</td>
+                        </tr>
+                        <tr>
+                          <td>BlockNonce</td>
+                          <td>{{ .BlockNonce }}</td>
+                        </tr>
+                        <tr>
+                          <td>Transactions</td>
+                          <td>{{ .Transactions }}</td>
+                        </tr>
+                        <tr>
+                          <td>GasUsed</td>
+                          <td>{{ .GasUsed }}</td>
+                        </tr>
+                        <tr>
+                          <td>MinedOn</td>
+                          <td>{{ .MinedOn }}</td>
+                        </tr>
+                        <tr>
+                          <td>Difficulty</td>
+                          <td>{{ .Difficulty }}</td>
+                        </tr>
+                        <tr>
+                          <td>Size</td>
+                          <td>{{ .Size }}</td>
+                        </tr>
+                        <tr>
+                          <td>Gaslimit</td>
+                          <td>{{ .Gaslimit }}</td>
+                        </tr>
+                        <tr>
+                          <td>ParentHash</td>
+                          <td>{{ .ParentHash }}</td>
+                        </tr>
+                        <tr>
+                          <td>UncleHash</td>
+                          <td>{{ .UncleHash }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <form action="/homepage">
+                    <p class="lead">
+                      <button class="btn btn-primary" type="submit">
+                        <span class="spinner-grow spinner-grow-sm"></span>
+                        <a href="/homepage" style="color:#f8f9fa">Go back to home !</a>
+                      </button>
+                    </p>
+                  </form>
+                </div>
               </div>
-              <form action="/homepage">
-                <p class="lead">
-                  <button class="btn btn-primary" type="submit">
-                       <span class="spinner-grow spinner-grow-sm"></span>
-                       <a href="/homepage" style="color:#f8f9fa">Go back to home !</a>
-                  </button>
-                </p>
-              </form>
+
             </div>
+            <!-- /.container-fluid -->
+
           </div>
+          <!-- End of Main Content -->
+
+          <!-- Footer -->
+          <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+              <div class="copyright text-center my-auto">
+                <span>Copyright &copy; Your Website 2022</span>
+              </div>
+            </div>
+          </footer>
+          <!-- End of Footer -->
 
         </div>
-        <!-- /.container-fluid -->
+        <!-- End of Content Wrapper -->
 
       </div>
-      <!-- End of Main Content -->
+      <!-- End of Page Wrapper -->
 
-      <!-- Footer -->
-      <footer class="sticky-footer bg-white">
-        <div class="container my-auto">
-          <div class="copyright text-center my-auto">
-            <span>Copyright &copy; Your Website 2022</span>
-          </div>
-        </div>
-      </footer>
-      <!-- End of Footer -->
+      <!-- Bootstrap core JavaScript-->
+      <script src="/static/vendor/jquery/jquery.min.js"></script>
+      <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    </div>
-    <!-- End of Content Wrapper -->
-
-  </div>
-  <!-- End of Page Wrapper -->
-
-  <!-- Bootstrap core JavaScript-->
-  <script src="/static/vendor/jquery/jquery.min.js"></script>
-  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Custom scripts for all pages-->
-  <script src="/static/js/sb-admin-2.min.js"></script>
+      <!-- Custom scripts for all pages-->
+      <script src="/static/js/sb-admin-2.min.js"></script>
 
 </body>
+
 </html>

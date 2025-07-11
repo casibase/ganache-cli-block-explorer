@@ -55,7 +55,8 @@
 
       <!-- Nav Item - Pages Collapse Menu -->
       <li class="nav-item">
-        <a class="nav-link collapsed" href="/" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+        <a class="nav-link collapsed" href="/" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+          aria-controls="collapseTwo">
           <i class="fas fa-fw fa-cog"></i>
           <span>Menu</span>
         </a>
@@ -93,7 +94,8 @@
 
             <!-- Nav Item - User Information -->
             <li class="nav-item dropdown no-arrow">
-              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">Ganache Block-Explorer</span>
                 <img class="img-profile rounded-circle" src="/static/img/ganache_ico.png">
               </a>
@@ -121,7 +123,8 @@
                 <div class="card-body">
                   <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total no. of Transactions</div>
+                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total no. of Transactions
+                      </div>
                       <div class="h5 mb-0 font-weight-bold text-gray-800">{{ .Totaltransactions }}</div>
                     </div>
                     <div class="col-auto">
@@ -139,7 +142,9 @@
                   <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                       <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Block Number</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ .BlockNumber }}</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        <a href="/txpage?blocknumber={{ .BlockNumber }}">{{ .BlockNumber }}</a>
+                      </div>
                     </div>
                     <div class="col-auto">
                       <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -156,7 +161,10 @@
                   <div class="row no-gutters align-items">
                     <div class="col mr-2">
                       <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Block Hash</div>
-                      <div class="h6 mb-0 font-weight-bold text-gray-800" style="text-align:-webkit-match-;width:170px" id="blockHash{{ .BlockHash }}"><a href='' onclick="this.href='blockdetails?blockhash='+document.getElementById('blockHash{{ .BlockHash }}').textContent">{{ .BlockHash }}</a></div>
+                      <div class="h6 mb-0 font-weight-bold text-gray-800" style="text-align:-webkit-match-;width:170px"
+                        id="blockHash{{ .BlockHash }}"><a href=''
+                          onclick="this.href='blockdetails?blockhash='+document.getElementById('blockHash{{ .BlockHash }}').textContent">{{
+                          .BlockHash }}</a></div>
                     </div>
                     <div class="col-auto">
                       <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -173,9 +181,9 @@
                 <div class="card-body">
                   <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                      <div class="h5 mb-0 font-weight-bold text-gray-800" >
-					  <h2 style="color:#28A828;">Transaction Status</h2>
-					  </div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        <h2 style="color:#28A828;">Transaction Status</h2>
+                      </div>
                       <div class="h5 mb-0 font-weight-bold text-gray-800">{{ .TransactionStatus }}</div>
                     </div>
                     <div class="col-auto">
@@ -207,32 +215,36 @@
                       <tbody>
                         {{ range .TxDetails }}
                         <tr>
-						  <th>Transaction Hash</th>
-                          <td>{{ .TxHash }}</td>
-                        </tr>			
-                        <tr>		
-						  <th>Transaction Gas</th>						
-                          <td>{{ .TxGas }}</td>
-                        </tr>			
-                        <tr>	
-						  <th>Transaction Gas Price</th>						
-                          <td>{{ .TxGasPrice }}</td>
-                        </tr>			
-                        <tr>		
-						  <th>Transaction Nonce</th>						
-                          <td>{{ .TxNonce }}</td>
-                        </tr>			
-                        <tr>	
-						  <th>Transaction To</th>						
-                          <td>{{ .TxToAddress }}</td>
-                        </tr>			
-                        <tr>	
-						  <th>Transaction From</th>						
-						   <td>{{ .TxFromAddress }}</td>
+                          <th>Transaction Hash</th>
+                          <td><a href="/txinfo?txhash={{ .TxHash }}">{{ .TxHash }}</a></td>
                         </tr>
-                        <tr>	
-						  <th>Transaction Value [wei]</th>						
-						   <td>{{ .TxValue }}</td>
+                        <tr>
+                          <th>Transaction Gas</th>
+                          <td>{{ .TxGas }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction Gas Price</th>
+                          <td>{{ .TxGasPrice }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction Nonce</th>
+                          <td>{{ .TxNonce }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction To</th>
+                          <td>{{ .TxToAddress }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction From</th>
+                          <td>{{ .TxFromAddress }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction Value [wei]</th>
+                          <td>{{ .TxValue }}</td>
+                        </tr>
+                        <tr>
+                          <th>Transaction Status</th>
+                          <td>{{ .TxStatus }}</td>
                         </tr>
                         {{ end }}
                       </tbody>
@@ -240,14 +252,14 @@
                   </div>
                 </div>
               </div>
-             
+
             </div>
           </div>
-		  
-		  
-		  
-		  
-		   <div class="row">
+
+
+
+
+          <div class="row">
             <div class="col-xl-12 col-lg-12">
               <div class="card shadow mb-4">
                 <!-- Card Header -->
@@ -261,15 +273,18 @@
                       <thead>
                         <tr>
                           <th>Tx Data</th>
-                         
-						  </tr>
+                        </tr>
                       </thead>
                       <tbody>
                         {{ range .TxDetails }}
                         <tr>
-
-                          <td>{{ .TxData }}</td>
-                         </tr>
+                          <td>
+                            <span class="tx-data-hex" onclick="showDecodedData('{{ .TxData }}')"
+                              style="cursor: pointer; color: #007bff; text-decoration: underline;">
+                              {{ .TxData }}
+                            </span>
+                          </td>
+                        </tr>
                         {{ end }}
                       </tbody>
                     </table>
@@ -279,15 +294,15 @@
               <form action="/homepage">
                 <p class="lead">
                   <button class="btn btn-primary" type="submit">
-                       <span class="spinner-grow spinner-grow-sm"></span>
-                       <a href="/homepage" style="color:#f8f9fa">Go back to home !</a>
+                    <span class="spinner-grow spinner-grow-sm"></span>
+                    <a href="/homepage" style="color:#f8f9fa">Go back to home !</a>
                   </button>
                 </p>
               </form>
             </div>
           </div>
-		  
-		  
+
+
 
         </div>
         <!-- /.container-fluid -->
@@ -317,6 +332,89 @@
 
   <!-- Custom scripts for all pages-->
   <script src="/static/js/sb-admin-2.min.js"></script>
+
+  <!-- Modal for decoded data -->
+  <div class="modal fade" id="decodedDataModal" tabindex="-1" role="dialog" aria-labelledby="decodedDataModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="decodedDataModalLabel">Decoded Transaction Data</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="hexData">Hex Data:</label>
+            <textarea class="form-control" id="hexData" rows="3" readonly></textarea>
+          </div>
+          <div class="form-group">
+            <label for="decodedData">Decoded Data (UTF-8):</label>
+            <textarea class="form-control" id="decodedData" rows="5" readonly></textarea>
+          </div>
+          <div class="form-group">
+            <label for="asciiData">ASCII Data:</label>
+            <textarea class="form-control" id="asciiData" rows="3" readonly></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showDecodedData(hexData) {
+      // 设置原始hex数据
+      document.getElementById('hexData').value = hexData;
+
+      // 解码hex为UTF-8
+      let decodedUtf8 = '';
+      let asciiData = '';
+
+      if (hexData && hexData.length > 2) {
+        // 移除0x前缀
+        let cleanHex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
+
+        try {
+          // 转换为UTF-8
+          let bytes = [];
+          for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(parseInt(cleanHex.substr(i, 2), 16));
+          }
+
+          // UTF-8 解码
+          decodedUtf8 = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+
+          // ASCII 解码 (只显示可打印字符)
+          asciiData = bytes.map(byte => {
+            if (byte >= 32 && byte <= 126) {
+              return String.fromCharCode(byte);
+            } else if (byte === 0) {
+              return '';
+            } else {
+              return '\\x' + byte.toString(16).padStart(2, '0');
+            }
+          }).join('');
+
+        } catch (e) {
+          decodedUtf8 = 'Error decoding UTF-8: ' + e.message;
+          asciiData = 'Error decoding ASCII: ' + e.message;
+        }
+      } else {
+        decodedUtf8 = 'No data to decode';
+        asciiData = 'No data to decode';
+      }
+
+      document.getElementById('decodedData').value = decodedUtf8;
+      document.getElementById('asciiData').value = asciiData;
+
+      // 显示模态框
+      $('#decodedDataModal').modal('show');
+    }
+  </script>
 
 </body>
 
