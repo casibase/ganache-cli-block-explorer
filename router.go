@@ -1,5 +1,5 @@
-/**
-
+/*
+*
  */
 package main
 
@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"ganache-cli-block-explorer/conf"
 	"html/template"
 	"log"
 	"math/big"
@@ -109,8 +110,7 @@ func weiToEther(wei *big.Int) *big.Float {
 // *********************** block details ***************************************
 
 /*
-	blockInDetails function: fetches the block details based on hash
-
+blockInDetails function: fetches the block details based on hash
 */
 func blockInDetails(w http.ResponseWriter, r *http.Request) {
 	/* local variables */
@@ -152,9 +152,8 @@ func blockInDetails(w http.ResponseWriter, r *http.Request) {
 // *********************** blockshomepage **************************************
 
 /*
-	blockPage function: fetches the block details based on number for the block
-	page
-
+blockPage function: fetches the block details based on number for the block
+page
 */
 func blockPage(w http.ResponseWriter, bn *big.Int) blockInfo {
 	var receipt *types.Receipt
@@ -195,8 +194,7 @@ func blockPage(w http.ResponseWriter, bn *big.Int) blockInfo {
 // *********************** homepage **************************************
 
 /*
-	accountsBalance function: fetches the account details and their balance
-
+accountsBalance function: fetches the account details and their balance
 */
 func getAccountDetails(account common.Address, itr int) accountInfo {
 
@@ -225,8 +223,7 @@ func getAccountDetails(account common.Address, itr int) accountInfo {
 }
 
 /*
-	accountsBalance function: fetches the account details and their balance
-
+accountsBalance function: fetches the account details and their balance
 */
 func showBalanceInfo(w http.ResponseWriter, r *http.Request) {
 	var qss string
@@ -265,9 +262,8 @@ func showBalanceInfo(w http.ResponseWriter, r *http.Request) {
 // *********************** txpage **********************************************
 
 /*
-	txPage function: provide the complete transaction details based on the
-	block number or block hash.
-
+txPage function: provide the complete transaction details based on the
+block number or block hash.
 */
 func txPage(w http.ResponseWriter, r *http.Request) {
 	/* local variables */
@@ -484,8 +480,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 // *********************** On Account of failure *******************************
 
 /*
-	kickBack function: kickback to 404 if any invalid request or failure happens
-
+kickBack function: kickback to 404 if any invalid request or failure happens
 */
 func kickBackErr(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/404.html"))
@@ -503,8 +498,7 @@ func kickBack(err error, msg string) {
 // *********************** homepage ********************************************
 
 /*
-	homePage function: serves the content for the main home page.
-
+homePage function: serves the content for the main home page.
 */
 func homePage(w http.ResponseWriter, r *http.Request) {
 	/* local variables */
@@ -589,8 +583,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 // *********************** welcome page ****************************************
 
 /*
-	welcomePage function: serves the welcome page.
-
+welcomePage function: serves the welcome page.
 */
 func welcomePage(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/welcome.html"))
@@ -605,6 +598,9 @@ func welcomePage(w http.ResponseWriter, r *http.Request) {
 func main() {
 
 	fmt.Println("!!!!INITIALIZING SERVER!!!!")
+	config := conf.LoadConfig("conf/app.yaml")
+	// updating the host from config file
+	NetworkHost = config.NetworkHost
 	// mux router
 	gorilla := mux.NewRouter()
 
@@ -629,7 +625,7 @@ func main() {
 	// Note: Here gorilla is like passing our own server handler into net/http, by default its false
 	srv := &http.Server{
 		Handler: gorilla,
-		Addr:    "127.0.0.1:5051",
+		Addr:    config.ServerAddr,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
