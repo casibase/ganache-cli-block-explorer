@@ -138,7 +138,7 @@ func blockInDetails(w http.ResponseWriter, r *http.Request) {
 		GasUsed:      blockDetails.GasUsed(),
 		MinedOn:      creationTime,
 		Difficulty:   blockDetails.Difficulty(),
-		Size:         blockDetails.Size(),
+		Size:         common.StorageSize(blockDetails.Size()),
 		Gaslimit:     blockDetails.GasLimit(),
 		ParentHash:   blockDetails.ParentHash().String(),
 		UncleHash:    blockDetails.UncleHash().String(),
