@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"bytes"
@@ -118,18 +118,3 @@ func newClient(url string, options ...func(rpc *EthRPC)) *EthRPC {
 
 	return rpc
 }
-
-/*
-func main() {
-	client := newClient("http://18.193.129.167:8545")
-
-	var accounts []string
-
-	_ = accounts
-	err := client.call("eth_accounts", &accounts)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(accounts)
-}*/
