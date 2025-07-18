@@ -79,6 +79,14 @@ type txDetails struct {
 	TxData        string
 	TxValue       *big.Int
 	TxStatus      string
+	TxLogs        []txLog
+}
+
+// for transaction logs
+type txLog struct {
+	Address string
+	Topics  []string
+	Data    string
 }
 
 // for transaction details
@@ -91,7 +99,7 @@ type txPages struct {
 }
 
 // for error logs
-type txLogs struct {
+type ErrorLog struct {
 	Status   uint64
 	Log      string
 	ErrorMsg error
@@ -269,7 +277,8 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var toAddress string
 	var execStatus bool
-	var log txLogs
+	var txLogsData []txLog
+	var errLog ErrorLog
 
 	// parsing the request
 	for _, qs := range r.URL.Query() {
@@ -288,7 +297,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 		// check whether block number exists or not
 		if err != nil {
 			execStatus = true
-			log = txLogs{
+			errLog = ErrorLog{
 				Status:   404,
 				Log:      "Block with given hash is not available in the network",
 				ErrorMsg: err,
@@ -306,7 +315,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 		// check whether block hash exists or not
 		if err != nil {
 			execStatus = true
-			log = txLogs{
+			errLog = ErrorLog{
 				Status:   404,
 				Log:      "Block with given number is not available in the network",
 				ErrorMsg: err,
@@ -321,7 +330,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 	if execStatus {
 		// render
 		tmpl := template.Must(template.ParseFiles("template/404.html"))
-		tmpl.Execute(w, log)
+		tmpl.Execute(w, errLog)
 
 	} else {
 
@@ -343,9 +352,23 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 				receiptStatus = "FAILED"
 			}
 
+			// get receipt logs
+			if receipt != nil {
+				for _, log := range receipt.Logs {
+					var topics []string
+					for _, topic := range log.Topics {
+						topics = append(topics, topic.Hex())
+					}
+					txLogsData = append(txLogsData, txLog{
+						Address: log.Address.Hex(),
+						Topics:  topics,
+						Data:    hex.EncodeToString(log.Data),
+					})
+				}
+			}
+
 			signer := types.LatestSignerForChainID(tx.ChainId())
 			sender, _ := signer.Sender(tx)
-			fmt.Println("From inside: ", sender.Hex())
 			dt := txDetails{
 				TxHash:        tx.Hash().Hex(),
 				TxGas:         tx.Gas(),
@@ -356,6 +379,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 				TxData:        hex.EncodeToString(tx.Data()),
 				TxValue:       tx.Value(),
 				TxStatus:      receiptStatus,
+				TxLogs:        txLogsData,
 			}
 			// since transaction are multiple, loading it into an array
 			listTxDetails = append(listTxDetails, dt)
@@ -389,8 +413,9 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 	var toAddress string
 
 	var execStatus bool
-	var log txLogs
+	var errLog ErrorLog
 	var receipt *types.Receipt
+	var txLogsData []txLog
 	var receiptStatus string
 	// parsing the request
 	for _, qs := range r.URL.Query() {
@@ -420,7 +445,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 		// check whether block number exists or not
 		if err != nil {
 			execStatus = true
-			log = txLogs{
+			errLog = ErrorLog{
 				Status:   404,
 				Log:      "Txn with given hash is not available in the network",
 				ErrorMsg: err,
@@ -436,7 +461,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 	if execStatus || err != nil {
 		// render
 		tmpl := template.Must(template.ParseFiles("template/404.html"))
-		tmpl.Execute(w, log)
+		tmpl.Execute(w, errLog)
 
 	} else {
 		// getting transaction details
@@ -446,6 +471,21 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 			toAddress = receipt.ContractAddress.Hex() + " [CONTRACT CREATION]"
 		} else {
 			toAddress = tx.To().Hex()
+		}
+
+		// get receipt logs
+		if receipt != nil {
+			for _, receiptLog := range receipt.Logs {
+				var topics []string
+				for _, topic := range receiptLog.Topics {
+					topics = append(topics, topic.Hex())
+				}
+				txLogsData = append(txLogsData, txLog{
+					Address: receiptLog.Address.Hex(),
+					Topics:  topics,
+					Data:    hex.EncodeToString(receiptLog.Data),
+				})
+			}
 		}
 
 		signer := types.LatestSignerForChainID(tx.ChainId())
@@ -461,6 +501,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 			TxData:        hex.EncodeToString(tx.Data()),
 			TxValue:       tx.Value(),
 			TxStatus:      receiptStatus,
+			TxLogs:        txLogsData,
 		}
 		// since transaction are multiple, loading it into an array
 		listTxDetails = append(listTxDetails, dt)

@@ -209,7 +209,7 @@
                 <!-- Card Body -->
                 <div class="card-body">
                   <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <table class="table table-bordered" id="txTable" width="100%" cellspacing="0">
                       <thead>
 
                       <tbody>
@@ -256,15 +256,15 @@
             </div>
           </div>
 
-
-
-
           <div class="row">
             <div class="col-xl-12 col-lg-12">
               <div class="card shadow mb-4">
                 <!-- Card Header -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                   <h6 class="m-0 font-weight-bold text-primary">Transactions Data</h6>
+                  <button onclick="toggleDecodeMode('tx')" id="decodeToggleBtn" class="btn btn-primary btn-sm">
+                    Decode Data
+                  </button>
                 </div>
                 <!-- Card Body -->
                 <div class="card-body">
@@ -272,17 +272,22 @@
                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                       <thead>
                         <tr>
-                          <th>Tx Data</th>
+                          <th>
+                            <span>Tx Input Data</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {{ range .TxDetails }}
                         <tr>
                           <td>
-                            <span class="tx-data-hex" onclick="showDecodedData('{{ .TxData }}')"
-                              style="cursor: pointer; color: #007bff; text-decoration: underline;">
-                              {{ .TxData }}
-                            </span>
+                            <div class="tx-data-container">
+                              <div class="tx-data-hex" style="word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
+                                id="hex-{{ .TxHash }}">{{ .TxData }}</div>
+                              <div class="tx-data-decoded"
+                                style="display: none; word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
+                                id="decoded-{{ .TxHash }}"></div>
+                            </div>
                           </td>
                         </tr>
                         {{ end }}
@@ -291,6 +296,65 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Transaction Logs Section -->
+              {{ range .TxDetails }}
+              {{ if .TxLogs }}
+              <div class="card shadow mb-4">
+                <!-- Card Header -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Transaction Logs ({{ len .TxLogs }})</h6>
+                  <div>
+                    <button onclick="toggleDecodeMode('logs')" id="logsDecodeToggleBtn" class="btn btn-primary btn-sm">
+                      Decode Data
+                    </button>
+                  </div>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                      <tbody>
+                        {{ range $logIndex, $log := .TxLogs }}
+                        <tr>
+                          <th colspan="2" class="bg-light">Log {{ $logIndex }}</th>
+                        </tr>
+                        <tr>
+                          <th style="width: 20%;">Contract Address</th>
+                          <td style="word-break: break-all;">{{ .Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Topics</th>
+                          <td>
+                            {{ range $index, $topic := .Topics }}
+                            <div>
+                              <strong>Topic {{ $index }}:</strong><br>
+                              <span style="word-break: break-all;">{{ $topic }}</span>
+                            </div>
+                            {{ end }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Data</th>
+                          <td>
+                            <div class="log-data-container">
+                              <div class="log-data-hex" style="word-break: break-all; max-height: 200px; overflow-y: auto;">
+                                {{ if .Data }}{{ .Data }}{{ else }}<em>No data</em>{{ end }}
+                              </div>
+                              <div class="log-data-decoded" style="display: none; word-break: break-all; max-height: 200px; overflow-y: auto;">
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {{ end }}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {{ end }}
+              {{ end }}
+
               <form action="/homepage">
                 <p class="lead">
                   <button class="btn btn-primary" type="submit">
@@ -333,86 +397,85 @@
   <!-- Custom scripts for all pages-->
   <script src="/static/js/sb-admin-2.min.js"></script>
 
-  <!-- Modal for decoded data -->
-  <div class="modal fade" id="decodedDataModal" tabindex="-1" role="dialog" aria-labelledby="decodedDataModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="decodedDataModalLabel">Decoded Transaction Data</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="hexData">Hex Data:</label>
-            <textarea class="form-control" id="hexData" rows="3" readonly></textarea>
-          </div>
-          <div class="form-group">
-            <label for="decodedData">Decoded Data (UTF-8):</label>
-            <textarea class="form-control" id="decodedData" rows="5" readonly></textarea>
-          </div>
-          <div class="form-group">
-            <label for="asciiData">ASCII Data:</label>
-            <textarea class="form-control" id="asciiData" rows="3" readonly></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
-    function showDecodedData(hexData) {
-      // 设置原始hex数据
-      document.getElementById('hexData').value = hexData;
+    // Initialize decode mode states
+    window.isTxDecodeMode = false;
+    window.isLogsDecodeMode = false;
 
-      // 解码hex为UTF-8
-      let decodedUtf8 = '';
-      let asciiData = '';
-
-      if (hexData && hexData.length > 2) {
-        // 移除0x前缀
-        let cleanHex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
-
-        try {
-          // 转换为UTF-8
-          let bytes = [];
-          for (let i = 0; i < cleanHex.length; i += 2) {
-            bytes.push(parseInt(cleanHex.substr(i, 2), 16));
-          }
-
-          // UTF-8 解码
-          decodedUtf8 = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
-
-          // ASCII 解码 (只显示可打印字符)
-          asciiData = bytes.map(byte => {
-            if (byte >= 32 && byte <= 126) {
-              return String.fromCharCode(byte);
-            } else if (byte === 0) {
-              return '';
-            } else {
-              return '\\x' + byte.toString(16).padStart(2, '0');
-            }
-          }).join('');
-
-        } catch (e) {
-          decodedUtf8 = 'Error decoding UTF-8: ' + e.message;
-          asciiData = 'Error decoding ASCII: ' + e.message;
-        }
-      } else {
-        decodedUtf8 = 'No data to decode';
-        asciiData = 'No data to decode';
+    function decodeHexToUtf8(hexData) {
+      if (!hexData || hexData.length < 2) {
+        return 'No data to decode';
       }
 
-      document.getElementById('decodedData').value = decodedUtf8;
-      document.getElementById('asciiData').value = asciiData;
+      try {
+        let cleanHex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
+        if (cleanHex.length % 2 !== 0) {
+          cleanHex = '0' + cleanHex;
+        }
 
-      // 显示模态框
-      $('#decodedDataModal').modal('show');
+        let bytes = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+          bytes.push(parseInt(cleanHex.substr(i, 2), 16));
+        }
+
+        const decodedUtf8 = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+        return decodedUtf8.replace(/[\x00-\x1F\x7F]/g, '').trim() || 'No readable UTF-8 content';
+
+      } catch (e) {
+        return 'Error decoding: ' + e.message;
+      }
+    }
+
+    function toggleDecodeMode(type) {
+      let isDecodeMode, toggleBtn, hexElements, decodedElements;
+      
+      if (type === 'tx') {
+        isDecodeMode = !window.isTxDecodeMode;
+        window.isTxDecodeMode = isDecodeMode;
+        toggleBtn = document.getElementById('decodeToggleBtn');
+        hexElements = document.querySelectorAll('.tx-data-hex');
+        decodedElements = document.querySelectorAll('.tx-data-decoded');
+      } else if (type === 'logs') {
+        isDecodeMode = !window.isLogsDecodeMode;
+        window.isLogsDecodeMode = isDecodeMode;
+        toggleBtn = document.getElementById('logsDecodeToggleBtn');
+        hexElements = document.querySelectorAll('.log-data-hex');
+        decodedElements = document.querySelectorAll('.log-data-decoded');
+      }
+
+      if (isDecodeMode) {
+        toggleBtn.textContent = 'Show Hex';
+        toggleBtn.classList.remove('btn-primary');
+        toggleBtn.classList.add('btn-success');
+
+        hexElements.forEach((hexElement, index) => {
+          const decodedElement = decodedElements[index];
+          if (hexElement && decodedElement) {
+            hexElement.style.display = 'none';
+            decodedElement.style.display = 'block';
+            
+            const hexData = hexElement.textContent.trim().replace(/\s+/g, '');
+            if (hexData && hexData !== 'No data') {
+              const decoded = decodeHexToUtf8(hexData);
+              decodedElement.textContent = decoded;
+            } else {
+              decodedElement.innerHTML = '<em>No data to decode</em>';
+            }
+          }
+        });
+      } else {
+        toggleBtn.textContent = 'Decode Data';
+        toggleBtn.classList.remove('btn-success');
+        toggleBtn.classList.add('btn-primary');
+
+        hexElements.forEach((hexElement, index) => {
+          const decodedElement = decodedElements[index];
+          if (hexElement && decodedElement) {
+            hexElement.style.display = 'block';
+            decodedElement.style.display = 'none';
+          }
+        });
+      }
     }
   </script>
 
