@@ -7,9 +7,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ContractConfig struct {
+	Path string `yaml:"path"`
+	Name string `yaml:"name"`
+}
+
 type Config struct {
-	ServerAddr  string `yaml:"server_addr"`
-	NetworkHost string `yaml:"network_host"`
+	ServerAddr  string           `yaml:"server_addr"`
+	NetworkHost string           `yaml:"network_host"`
+	Contracts   []ContractConfig `yaml:"contracts"`
 }
 
 func LoadConfig(path string) Config {

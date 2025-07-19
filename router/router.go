@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"ganache-cli-block-explorer/conf"
+	"ganache-cli-block-explorer/utils"
 	"html/template"
 	"log"
 	"math/big"
@@ -23,6 +24,7 @@ import (
 
 var NetworkHost string
 var client *ethclient.Client // for client to access globally
+var contractABIs *utils.ContractABIs
 
 // *********************** structs *********************************************
 
@@ -80,13 +82,15 @@ type txDetails struct {
 	TxValue       *big.Int
 	TxStatus      string
 	TxLogs        []txLog
+	ParsedData    *utils.ParsedTxData
 }
 
 // for transaction logs
 type txLog struct {
-	Address string
-	Topics  []string
-	Data    string
+	Address   string
+	Topics    []string
+	Data      string
+	ParsedLog *utils.ParsedTxData
 }
 
 // for transaction details
@@ -356,19 +360,36 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 			if receipt != nil {
 				for _, log := range receipt.Logs {
 					var topics []string
+					var topicsHashes []common.Hash
 					for _, topic := range log.Topics {
 						topics = append(topics, topic.Hex())
+						topicsHashes = append(topicsHashes, topic)
 					}
+
+					// Parse event logs
+					var parsedLog *utils.ParsedTxData
+					if len(*contractABIs) > 0 {
+						parsedLog = contractABIs.ParseEventLogs(topicsHashes, log.Data)
+					}
+
 					txLogsData = append(txLogsData, txLog{
-						Address: log.Address.Hex(),
-						Topics:  topics,
-						Data:    hex.EncodeToString(log.Data),
+						Address:   log.Address.Hex(),
+						Topics:    topics,
+						Data:      hex.EncodeToString(log.Data),
+						ParsedLog: parsedLog,
 					})
 				}
 			}
 
 			signer := types.LatestSignerForChainID(tx.ChainId())
 			sender, _ := signer.Sender(tx)
+
+			// Parse transaction data
+			var parsedTxData *utils.ParsedTxData
+			if len(tx.Data()) > 0 && len(*contractABIs) > 0 {
+				parsedTxData = contractABIs.ParseTransactionData(tx.Data())
+			}
+
 			dt := txDetails{
 				TxHash:        tx.Hash().Hex(),
 				TxGas:         tx.Gas(),
@@ -380,6 +401,7 @@ func txPage(w http.ResponseWriter, r *http.Request) {
 				TxValue:       tx.Value(),
 				TxStatus:      receiptStatus,
 				TxLogs:        txLogsData,
+				ParsedData:    parsedTxData,
 			}
 			// since transaction are multiple, loading it into an array
 			listTxDetails = append(listTxDetails, dt)
@@ -477,19 +499,35 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 		if receipt != nil {
 			for _, receiptLog := range receipt.Logs {
 				var topics []string
+				var topicsHashes []common.Hash
 				for _, topic := range receiptLog.Topics {
 					topics = append(topics, topic.Hex())
+					topicsHashes = append(topicsHashes, topic)
 				}
+
+				// Parse event logs
+				var parsedLog *utils.ParsedTxData
+				if len(*contractABIs) > 0 {
+					parsedLog = contractABIs.ParseEventLogs(topicsHashes, receiptLog.Data)
+				}
+
 				txLogsData = append(txLogsData, txLog{
-					Address: receiptLog.Address.Hex(),
-					Topics:  topics,
-					Data:    hex.EncodeToString(receiptLog.Data),
+					Address:   receiptLog.Address.Hex(),
+					Topics:    topics,
+					Data:      hex.EncodeToString(receiptLog.Data),
+					ParsedLog: parsedLog,
 				})
 			}
 		}
 
 		signer := types.LatestSignerForChainID(tx.ChainId())
 		sender, _ := signer.Sender(tx)
+
+		// Parse transaction data
+		var parsedTxData *utils.ParsedTxData
+		if len(tx.Data()) > 0 && len(*contractABIs) > 0 {
+			parsedTxData = contractABIs.ParseTransactionData(tx.Data())
+		}
 
 		dt := txDetails{
 			TxHash:        tx.Hash().Hex(),
@@ -502,6 +540,7 @@ func txDetailsPage(w http.ResponseWriter, r *http.Request) {
 			TxValue:       tx.Value(),
 			TxStatus:      receiptStatus,
 			TxLogs:        txLogsData,
+			ParsedData:    parsedTxData,
 		}
 		// since transaction are multiple, loading it into an array
 		listTxDetails = append(listTxDetails, dt)
@@ -619,6 +658,14 @@ func welcomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func InitRouter(config conf.Config) *mux.Router {
+	// Load contract ABIs from the configuration
+	var err error
+	if contractABIs, err = utils.LoadContractABIs(config.Contracts); err != nil {
+		log.Printf("Warning: Failed to load contract ABIs: %v", err)
+	} else {
+		log.Printf("Successfully loaded %d contract ABIs", len(*contractABIs))
+	}
+
 	// for the static file handling, all the assets files will be loaded into the static folder
 	staticFileHandler := http.FileServer(http.Dir("static"))
 	// mux router
@@ -643,7 +690,8 @@ func InitRouter(config conf.Config) *mux.Router {
 		log.Fatal("Failed to connect to the Ethereum client: ", clientErr)
 	}
 	// test connection
-	_, err := client.BlockNumber(context.Background())
+	log.Printf("Try connecting to Ethereum client at %s", NetworkHost)
+	_, err = client.BlockNumber(context.Background())
 	if err != nil {
 		log.Fatal("Failed to connect to the Ethereum client: ", err)
 	}
