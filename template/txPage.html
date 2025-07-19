@@ -262,37 +262,94 @@
                 <!-- Card Header -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                   <h6 class="m-0 font-weight-bold text-primary">Transactions Data</h6>
-                  <button onclick="toggleDecodeMode('tx')" id="decodeToggleBtn" class="btn btn-primary btn-sm">
-                    Decode Data
-                  </button>
+                  <div>
+                    <button onclick="toggleDecodeMode('tx')" id="decodeToggleBtn" class="btn btn-primary btn-sm">
+                      Decode Data
+                    </button>
+                    <button onclick="toggleABIMode('tx')" id="abiToggleBtn" class="btn btn-info btn-sm ml-2">
+                      Show ABI
+                    </button>
+                  </div>
                 </div>
                 <!-- Card Body -->
                 <div class="card-body">
                   <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                      <thead>
-                        <tr>
-                          <th>
-                            <span>Tx Input Data</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {{ range .TxDetails }}
-                        <tr>
-                          <td>
-                            <div class="tx-data-container">
-                              <div class="tx-data-hex" style="word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
-                                id="hex-{{ .TxHash }}">{{ .TxData }}</div>
-                              <div class="tx-data-decoded"
-                                style="display: none; word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
-                                id="decoded-{{ .TxHash }}"></div>
-                            </div>
-                          </td>
-                        </tr>
-                        {{ end }}
-                      </tbody>
-                    </table>
+                    <div id="tx-original-table">
+                      <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                          <tr>
+                            <th>
+                              <span>Tx Input Data</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {{ range .TxDetails }}
+                          <tr>
+                            <td>
+                              <div class="tx-data-container">
+                                <div class="tx-data-hex"
+                                  style="word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
+                                  id="hex-{{ .TxHash }}">{{ .TxData }}</div>
+                                <div class="tx-data-decoded"
+                                  style="display: none; word-break: break-all; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"
+                                  id="decoded-{{ .TxHash }}"></div>
+                                <div class="tx-data-abi" style="display: none;" id="abi-{{ .TxHash }}">
+                                  {{ if .ParsedData }}
+                                  <div class="row mb-2">
+                                    <div class="col-md-6">
+                                      <strong>Function Name:</strong> {{ .ParsedData.MethodName }}
+                                    </div>
+                                    <div class="col-md-6">
+                                      <strong>Function Signature:</strong>
+                                      <code>{{ .ParsedData.MethodSignature }}</code>
+                                    </div>
+                                  </div>
+                                  {{ if .ParsedData.Parameters }}
+                                  <hr>
+                                  <div class="mb-2">
+                                    <strong>Function Parameters:</strong>
+                                  </div>
+                                  <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                      <thead>
+                                        <tr>
+                                          <th>Parameter Name</th>
+                                          <th>Type</th>
+                                          <th>Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {{ range $index, $param := .ParsedData.Parameters }}
+                                        <tr>
+                                          <td><strong>{{ if .Name }}{{ .Name }}{{ else }}param_{{ $index }}{{ end
+                                              }}</strong></td>
+                                          <td>{{ .Type }}</td>
+                                          <td style="word-break: break-all;">{{ .Value }}</td>
+                                        </tr>
+                                        {{ end }}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  {{ else }}
+                                  <div class="alert alert-info">
+                                    This function has no parameters
+                                  </div>
+                                  {{ end }}
+                                  {{ else }}
+                                  <div class="alert alert-info">
+                                    <strong>Unable to parse ABI</strong><br>
+                                    This transaction data cannot match any known contract ABI.
+                                  </div>
+                                  {{ end }}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                          {{ end }}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -308,47 +365,105 @@
                     <button onclick="toggleDecodeMode('logs')" id="logsDecodeToggleBtn" class="btn btn-primary btn-sm">
                       Decode Data
                     </button>
+                    <button onclick="toggleABIMode('logs')" id="logsABIToggleBtn" class="btn btn-info btn-sm ml-2">
+                      Show ABI
+                    </button>
                   </div>
                 </div>
                 <!-- Card Body -->
                 <div class="card-body">
                   <div class="table-responsive">
-                    <table class="table table-bordered" width="100%" cellspacing="0">
-                      <tbody>
-                        {{ range $logIndex, $log := .TxLogs }}
-                        <tr>
-                          <th colspan="2" class="bg-light">Log {{ $logIndex }}</th>
-                        </tr>
-                        <tr>
-                          <th style="width: 20%;">Contract Address</th>
-                          <td style="word-break: break-all;">{{ .Address }}</td>
-                        </tr>
-                        <tr>
-                          <th>Topics</th>
-                          <td>
-                            {{ range $index, $topic := .Topics }}
-                            <div>
-                              <strong>Topic {{ $index }}:</strong><br>
-                              <span style="word-break: break-all;">{{ $topic }}</span>
-                            </div>
-                            {{ end }}
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Data</th>
-                          <td>
-                            <div class="log-data-container">
-                              <div class="log-data-hex" style="word-break: break-all; max-height: 200px; overflow-y: auto;">
-                                {{ if .Data }}{{ .Data }}{{ else }}<em>No data</em>{{ end }}
+                    <div id="logs-original-table">
+                      <table class="table table-bordered" width="100%" cellspacing="0">
+                        <tbody>
+                          {{ range $logIndex, $log := .TxLogs }}
+                          <tr>
+                            <th colspan="2" class="bg-light">Log {{ $logIndex }}</th>
+                          </tr>
+                          <tr>
+                            <th style="width: 20%;">Contract Address</th>
+                            <td style="word-break: break-all;">{{ .Address }}</td>
+                          </tr>
+                          <tr>
+                            <th>Topics</th>
+                            <td>
+                              {{ range $index, $topic := .Topics }}
+                              <div>
+                                <strong>Topic {{ $index }}:</strong><br>
+                                <span style="word-break: break-all;">{{ $topic }}</span>
                               </div>
-                              <div class="log-data-decoded" style="display: none; word-break: break-all; max-height: 200px; overflow-y: auto;">
+                              {{ end }}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Data</th>
+                            <td>
+                              <div class="log-data-container">
+                                <div class="log-data-hex"
+                                  style="word-break: break-all; max-height: 200px; overflow-y: auto;">
+                                  {{ if .Data }}{{ .Data }}{{ else }}<em>No data</em>{{ end }}
+                                </div>
+                                <div class="log-data-decoded"
+                                  style="display: none; word-break: break-all; max-height: 200px; overflow-y: auto;">
+                                </div>
+                                <div class="log-data-abi" style="display: none;" id="log-abi-{{ $logIndex }}">
+                                  {{ if .ParsedLog }}
+                                  <div class="row mb-2">
+                                    <div class="col-md-6">
+                                      <strong>Event Name:</strong> {{ .ParsedLog.MethodName }}
+                                    </div>
+                                    <div class="col-md-6">
+                                      <strong>Event Signature:</strong>
+                                      <code>{{ .ParsedLog.MethodSignature }}</code>
+                                    </div>
+                                  </div>
+                                  {{ if .ParsedLog.Parameters }}
+                                  <hr>
+                                  <div class="mb-2">
+                                    <strong>Event Parameters:</strong>
+                                  </div>
+                                  <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                      <thead>
+                                        <tr>
+                                          <th>Parameter Name</th>
+                                          <th>Type</th>
+                                          <th>Value</th>
+                                          <th>Index</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {{ range $index, $param := .ParsedLog.Parameters }}
+                                        <tr>
+                                          <td><strong>{{ if .Name }}{{ .Name }}{{ else }}param_{{ $index }}{{ end
+                                              }}</strong></td>
+                                          <td>{{ .Type }}</td>
+                                          <td style="word-break: break-all;">{{ .Value }}</td>
+                                          <td>{{ if .Indexed }}Indexed{{ else }}Data{{ end }}</td>
+                                        </tr>
+                                        {{ end }}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  {{ else }}
+                                  <div class="alert alert-info">
+                                    This event has no parameters
+                                  </div>
+                                  {{ end }}
+                                  {{ else }}
+                                  <div class="alert alert-info">
+                                    <strong>Unable to parse event log</strong><br>
+                                    This event log cannot match any known contract ABI event definition.
+                                  </div>
+                                  {{ end }}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                        {{ end }}
-                      </tbody>
-                    </table>
+                            </td>
+                          </tr>
+                          {{ end }}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -401,6 +516,8 @@
     // Initialize decode mode states
     window.isTxDecodeMode = false;
     window.isLogsDecodeMode = false;
+    window.isTxABIMode = false;
+    window.isLogsABIMode = false;
 
     function decodeHexToUtf8(hexData) {
       if (!hexData || hexData.length < 2) {
@@ -426,16 +543,83 @@
       }
     }
 
+    function toggleABIMode(type) {
+      let isABIMode, toggleBtn, hexElements, abiElements;
+
+      if (type === 'tx') {
+        isABIMode = !window.isTxABIMode;
+        window.isTxABIMode = isABIMode;
+        toggleBtn = document.getElementById('abiToggleBtn');
+        hexElements = document.querySelectorAll('.tx-data-hex');
+        abiElements = document.querySelectorAll('.tx-data-abi');
+      } else if (type === 'logs') {
+        isABIMode = !window.isLogsABIMode;
+        window.isLogsABIMode = isABIMode;
+        toggleBtn = document.getElementById('logsABIToggleBtn');
+        hexElements = document.querySelectorAll('.log-data-hex');
+        abiElements = document.querySelectorAll('.log-data-abi');
+      }
+
+      if (isABIMode) {
+        // Switch to ABI mode
+        toggleBtn.textContent = 'Show Original';
+        toggleBtn.classList.remove('btn-info');
+        toggleBtn.classList.add('btn-warning');
+
+        // Hide original data, show ABI parsing results
+        hexElements.forEach(el => el.style.display = 'none');
+        abiElements.forEach(el => el.style.display = 'block');
+
+        // Reset other modes
+        if (type === 'tx') {
+          window.isTxDecodeMode = false;
+          const decodeBtn = document.getElementById('decodeToggleBtn');
+          if (decodeBtn) {
+            decodeBtn.textContent = 'Decode Data';
+            decodeBtn.classList.remove('btn-success');
+            decodeBtn.classList.add('btn-primary');
+          }
+          // Hide all decoded content
+          document.querySelectorAll('.tx-data-decoded').forEach(el => el.style.display = 'none');
+        } else if (type === 'logs') {
+          window.isLogsDecodeMode = false;
+          const decodeBtn = document.getElementById('logsDecodeToggleBtn');
+          if (decodeBtn) {
+            decodeBtn.textContent = 'Decode Data';
+            decodeBtn.classList.remove('btn-success');
+            decodeBtn.classList.add('btn-primary');
+          }
+          // Hide all decoded content
+          document.querySelectorAll('.log-data-decoded').forEach(el => el.style.display = 'none');
+        }
+      } else {
+        // Switch back to original mode
+        toggleBtn.textContent = 'Show ABI';
+        toggleBtn.classList.remove('btn-warning');
+        toggleBtn.classList.add('btn-info');
+
+        // Show original data, hide ABI parsing results
+        hexElements.forEach(el => el.style.display = 'block');
+        abiElements.forEach(el => el.style.display = 'none');
+      }
+    }
+
     function toggleDecodeMode(type) {
       let isDecodeMode, toggleBtn, hexElements, decodedElements;
-      
+
       if (type === 'tx') {
+        // If currently showing ABI mode, don't handle decode mode
+        if (window.isTxABIMode) return;
+
         isDecodeMode = !window.isTxDecodeMode;
         window.isTxDecodeMode = isDecodeMode;
         toggleBtn = document.getElementById('decodeToggleBtn');
         hexElements = document.querySelectorAll('.tx-data-hex');
         decodedElements = document.querySelectorAll('.tx-data-decoded');
       } else if (type === 'logs') {
+        // If currently showing ABI mode, don't handle decode mode
+        if (window.isLogsABIMode) return;
+
         isDecodeMode = !window.isLogsDecodeMode;
         window.isLogsDecodeMode = isDecodeMode;
         toggleBtn = document.getElementById('logsDecodeToggleBtn');
@@ -453,7 +637,7 @@
           if (hexElement && decodedElement) {
             hexElement.style.display = 'none';
             decodedElement.style.display = 'block';
-            
+
             const hexData = hexElement.textContent.trim().replace(/\s+/g, '');
             if (hexData && hexData !== 'No data') {
               const decoded = decodeHexToUtf8(hexData);
@@ -463,6 +647,27 @@
             }
           }
         });
+
+        // Reset ABI mode
+        if (type === 'tx') {
+          window.isTxABIMode = false;
+          const abiBtn = document.getElementById('abiToggleBtn');
+          if (abiBtn) {
+            abiBtn.textContent = 'Show ABI';
+            abiBtn.classList.remove('btn-warning');
+            abiBtn.classList.add('btn-info');
+          }
+          document.querySelectorAll('.tx-data-abi').forEach(el => el.style.display = 'none');
+        } else if (type === 'logs') {
+          window.isLogsABIMode = false;
+          const abiBtn = document.getElementById('logsABIToggleBtn');
+          if (abiBtn) {
+            abiBtn.textContent = 'Show ABI';
+            abiBtn.classList.remove('btn-warning');
+            abiBtn.classList.add('btn-info');
+          }
+          document.querySelectorAll('.log-data-abi').forEach(el => el.style.display = 'none');
+        }
       } else {
         toggleBtn.textContent = 'Decode Data';
         toggleBtn.classList.remove('btn-success');

@@ -1,0 +1,103 @@
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "key",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "field",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "value",
+                "type": "string"
+            }
+        ],
+        "name": "DataSaved",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "data",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "key",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "field",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "value",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_key",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_field",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_value",
+                "type": "string"
+            }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "key",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "field",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "value",
+                        "type": "string"
+                    }
+                ],
+                "internalType": "struct SaveContract.DataItem",
+                "name": "_data",
+                "type": "tuple"
+            }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
